@@ -38,13 +38,14 @@ class SFG_Trainer:
             t = ToyGame()
             historyState = HistoryState(t.hand1, '')
             reach_probabilities = np.ones(2)
-            util += self.sf_cfrm(t, historyState, reach_probabilities, 1)
+            util += self.sf_cfrm(t, historyState, reach_probabilities, 1, 0)
+            print("ITERATION COMPLETE!")
 
-    def sf_cfrm(self, cards, history: HistoryState, reach_probabilities, cur_player):
+    def sf_cfrm(self, cards, history: HistoryState, reach_probabilities, cur_player, itr_cnt):
         '''
         Apply CFR on our toy game
         '''
-        print("CURRENT PLAYER: {}".format(cur_player))
+        #print("CURRENT PLAYER: {}".format(cur_player))
         cards_copy = copy.deepcopy(cards)
         suit_count = []
         straight_count = []
@@ -52,11 +53,11 @@ class SFG_Trainer:
             cards_copy.recreate_deck()
 
         if(len(history.secondary_data) > 0):
-            print(history.secondary_data)
+            #print(history.secondary_data)
             action = history.secondary_data[-1]
-            print("PERFORMING ACTION... {}, {}".format(history.secondary_data[-1], type(history.secondary_data[-1])))
+            #print("PERFORMING ACTION... {}, {}".format(history.secondary_data[-1], type(history.secondary_data[-1])))
             int_action = ToyGame.action_to_index[history.secondary_data[len(history.secondary_data)-1]]
-            print("ACTION: {}, {}".format(int_action,type(int_action)))
+            #print("ACTION: {}, {}".format(int_action,type(int_action)))
             cards_copy.perform_action(cur_player,int_action)
 
         cur_hand = cards_copy.hand1 if cur_player == 1 else cards_copy.hand2
@@ -66,18 +67,19 @@ class SFG_Trainer:
         cur_strategy = info_set.getStrategy(reach_probabilities[cur_player])
         cards_copy.create_auxiliary_information(cur_hand)
 
-        if (cards_copy.is_terminal(straight_count)):
-            print("GAME STATE SOLVED")
+        if (cards_copy.is_terminal(straight_count) or itr_cnt >= 5):
+            #print("GAME STATE SOLVED")
+            #print("HISTORY: {}".format(history.secondary_data))
             return ToyGame.utility(cards, history)
 
         cfr_vals = np.zeros(info_set.num_actions)
         action_space = (cards_copy.get_all_actions())
         random.shuffle(action_space)
 
-        print("ACTION SPACE: {}".format(action_space))
+       # print("ACTION SPACE: {}".format(action_space))
 
         for i, val in enumerate(action_space):
-            print("PERFORMED ACTION: {}".format(val))
+            #print("PERFORMED ACTION: {}".format(val))
 
             action_prob = cur_strategy[val]
             nxt_reach = reach_probabilities.copy()
@@ -87,22 +89,17 @@ class SFG_Trainer:
 
             new_history = copy.deepcopy(history)
 
-            if(type(val)==int):
-                val = ToyGame.index_to_action[val]
 
-            if(val[-1]==','):
-                val=val[0:len(val)-1]
-
-            print("PERFORMED ACTION: {}".format(val))
-
+            #print("PERFORMED ACTION: {}".format(val))
+            val = ToyGame.index_to_action[val]
             new_history.secondary_data += val
             new_history.main_data  = enemy_hand
 
-            cfr_vals[i] = -self.sf_cfrm(cards_copy, new_history, nxt_reach,  (cur_player+1)%2)
+            cfr_vals[i] = -self.sf_cfrm(cards_copy, new_history, nxt_reach,  (cur_player+1)%2, itr_cnt+1)
 
         node_value = cfr_vals.dot(cur_strategy)
-        for i, val in enumerate(ToyGame.get_all_actions()):
-            info_set.regretSum[i] += ((reach_probabilities[(cur_player + 1) % 2] * (cfr_vals[i] - node_value)))
+        for i, val in enumerate(action_space):
+            info_set.regretSum[val] += ((reach_probabilities[(cur_player + 1) % 2] * (cfr_vals[i] - node_value)))
 
         return node_value
 
@@ -141,7 +138,7 @@ class ToyGame:
     def create_hand(self, player_num):
         ptr = 0
         m_hand = []
-        print("DECK: {}".format(self.deck))
+        #print("DECK: {}".format(self.deck))
         while (ptr < ToyGame.N):
             e = self.deck.pop()
             m_hand.append(e)
@@ -172,8 +169,8 @@ class ToyGame:
 
         self.hand1.sort(key= lambda x : ToyGame.map_hand[x[0]])
         self.hand2.sort(key= lambda x : ToyGame.map_hand[x[0]])
-        print("SORTED HAND: {}".format(self.hand1))
-        print("SORTED HAND: {}".format(self.hand2))
+        #print("SORTED HAND: {}".format(self.hand1))
+        #print("SORTED HAND: {}".format(self.hand2))
         map_suit = {'h': 0, 'd': 1, 'c': 2, 's': 3}
 
         for s in hand:
@@ -188,15 +185,15 @@ class ToyGame:
         Here, we calculate the length of the straight flush draws we are holding
         '''
 
-        print(count_suits)
+        #print(count_suits)
 
         for k, v in count_suits.items():
             '''
             The idea is, for each suit, we want to find the longest straight flush draw currently in our hand with that suit
             '''
-            print("V: {}".format(v))
+            #print("V: {}".format(v))
             for cards in v:
-                print(cards,starting_cards[k])
+                #print(cards,starting_cards[k])
                 if (starting_cards[k] == -1):
                     starting_cards[k] = ToyGame.map_hand[cards]
                     straight_count[k] = 1
@@ -226,7 +223,9 @@ class ToyGame:
         player_num = 1 if len(action_history) % 2 == 0 else 2
 
         if(len(action_history) > 0):
-            self.perform_action(player_num, action_history[len(action_history) - 1])
+            if(self.deck == None or len(self.deck)==0):
+                self.recreate_deck()
+            self.perform_action(player_num, ToyGame.action_to_index[action_history[-1]])
 
         our_hand = history.main_data
         (suit_count, straight_count) = self.create_auxiliary_information(our_hand)
@@ -532,29 +531,11 @@ for (history, info_set) in k.info_map.items():
     print(history, info_set.getAverageStrategy())
 
 t = ToyGame()
-t.create_hand(1)
-t.create_hand(2)
-
-print("HAND 1: {}".format(t.hand1))
-print("HAND 2: {}".format(t.hand2))
-
-'''
-print("DECK: {}".format(t.deck))
-print("ACTION SPACE: {}".format(t.get_all_actions()))
-t.perform_action(1,4)
-print("NEW HAND: {}".format(t.hand1))
-print("BURN: {}".format(t.burn))
-t.perform_action(1,6)
-print("NEW HAND: {}".format(t.hand1))
-print("BURN: {}".format(t.burn))
-'''
-
-print("AUXILIARY INFORMATION FOR HAND 1: {}".format(t.create_auxiliary_information(t.hand1)))
-print("AUXILIARY INFORMATION FOR HAND 2: {}".format(t.create_auxiliary_information(t.hand2)))
-history1 = HistoryState(t.hand1, '')
-print("HAND UTILITY: {}".format(t.utility(history1)))
 
 
 test_cfr = ToyGame()
-run_cfr = SFG_Trainer(1000)
+run_cfr = SFG_Trainer(20)
 run_cfr.sf_train()
+
+for id, info in run_cfr.info_map.items():
+    print(id, info)
