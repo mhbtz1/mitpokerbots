@@ -21,6 +21,55 @@ class HistoryState:
         self.main_data = main_data
         self.secondary_data = secondary_data
 
+class SFG_Trainer:
+    def __init__(self, num_iter):
+        self.num_iter = num_iter
+
+    def get_information_set(self, card_plus_history):
+        if (card_plus_history not in self.info_map):
+            self.info_map[card_plus_history.secondary_data] = InformationSet(2)
+        return self.info_map[card_plus_history.secondary_data]
+
+    def sf_train(self, num_iter):
+        util = 0
+        strat = []
+        for _ in range(num_iter):
+            t = ToyGame()
+            historyState = HistoryState(t.hand1, '')
+            reach_probabilities = np.ones(2)
+            util += self.sf_cfrm(t, historyState, reach_probabilities, 1)
+
+    def sf_cfrm(self, cards, history: HistoryState, reach_probabilities, cur_player):
+        '''
+        Apply CFR on our toy game (NOT COMPLETED)
+        '''
+        if (ToyGame.is_terminal(history)):
+            return ToyGame.utility(cards, history)
+
+        cards_copy = cards.copy()
+        cards_copy.perform_action(history[len(history) - 1], cur_player)
+        cur_hand = cards_copy.hand1 if cur_player == 1 else cards_copy.hand2
+
+
+        info_set = self.get_information_set(history)
+        cur_strategy = info_set.getStrategy(reach_probabilities[cur_player])
+
+        cfr_vals = np.zeros(info_set.num_actions)
+
+        for i, val in enumerate(cards_copy.get_all_actions()):
+            action_prob = cur_strategy[i]
+            nxt_reach = reach_probabilities.copy()
+            nxt_reach[cur_player] *= action_prob
+
+            new_history = history.copy()
+            new_history.secondary_data += ToyGame.index_to_action[val]
+            cfr_vals[i] = -self.sf_cfrm(cards_copy, new_history, nxt_reach, ((cur_player + 1) % 2)+1 )
+
+        node_value = cfr_vals.dot(cur_strategy)
+        for i, val in enumerate(ToyGame.get_all_actions()):
+            info_set.regretSum[i] += ((reach_probabilities[(cur_player + 1) % 2] * (cfr_vals[i] - node_value)))
+
+        return node_value
 
 class ToyGame:
     '''
@@ -34,7 +83,7 @@ class ToyGame:
     action_to_index = {}
     N = 6
 
-    def __init__(self, hand1=[], hand2=[]):
+    def __init__(self):
         action_rep = ['0', '1', '2', '3', '4', '5', '6', '7,', '8', '9', 'T', 'E']
         for i in range(len(action_rep)):
             ToyGame.index_to_action[i] = action_rep[i]
@@ -46,8 +95,8 @@ class ToyGame:
                 self.deck.append(s + c)
         random.shuffle(self.deck)
         self.burn = []
-        self.hand1 = hand1
-        self.hand2 = hand2
+        self.create_hand(1)
+        self.create_hand(2)
 
     def create_hand(self, player_num):
         ptr = 0
@@ -62,8 +111,8 @@ class ToyGame:
         else:
             self.hand2 = m_hand
 
-    def is_terminal(self, history):
-        if (self.N in history.auxiliary_data):
+    def is_terminal(self, condition):
+        if (self.N in condition):
             return True
         return False
 
@@ -72,6 +121,19 @@ class ToyGame:
         Given a hand, calculate the relevant information needed for our utility function (the count of suits and the length of our straights for each suit in our hand) (NOT COMPLETED)
         '''
         count_suits = defaultdict(list)
+
+        def make_comparator(lt):
+            def compare(x, y):
+                if( lt(x,y) ):
+                    return 1
+                else:
+                    return -1
+            return compare
+
+        self.hand1.sort(key= lambda x : ToyGame.map_hand[x[0]])
+        self.hand2.sort(key= lambda x : ToyGame.map_hand[x[0]])
+        print("SORTED HAND: {}".format(self.hand1))
+        print("SORTED HAND: {}".format(self.hand2))
         map_suit = {'h': 0, 'd': 1, 'c': 2, 's': 3}
 
         for s in hand:
@@ -81,48 +143,70 @@ class ToyGame:
         straight_max_count = [0, 0, 0, 0]
         starting_cards = [-1, -1, -1, -1]  # maintain the current length of the straight we are holding
 
+
         '''
         Here, we calculate the length of the straight flush draws we are holding
         '''
+
+        print(count_suits)
+
         for k, v in count_suits.items():
             '''
             The idea is, for each suit, we want to find the longest straight flush draw currently in our hand with that suit
             '''
             print("V: {}".format(v))
             for cards in v:
+                print(cards,starting_cards[k])
                 if (starting_cards[k] == -1):
                     starting_cards[k] = ToyGame.map_hand[cards]
                     straight_count[k] = 1
                 else:
-                    if (starting_cards[k] == k - 1):
+                    if (ToyGame.map_hand[cards] == starting_cards[k] + 1):
                         starting_cards[k] = ToyGame.map_hand[cards]
-                        straight_count[ToyGame.map_hand[cards]] += 1
+                        straight_count[k] += 1
                     else:
                         straight_max_count[k] = max(straight_max_count[k], straight_count[k])
                         straight_count[k] = 1
                         starting_cards[k] = ToyGame.map_hand[cards]
+                straight_max_count[k] = max(straight_max_count[k], straight_count[k])
 
         '''
         Then, for each straight flush draw, calculate the number of outs our enemy is holding that we need OR have been burnt (i.e. a hand that cannot be completed should have 0/negative utility)
         '''
         enemy_count = []
 
-        return (suit_count, straight_count, enemy_count)
+        return (suit_count, straight_max_count)
 
     def utility(self, history: HistoryState):
         '''
         Custom utility function for our toy game using the two hands being played and the auxiliary information calculated (NOT COMPLETED)
         '''
-        hand = self.main_data
-        action_history = self.secondary_data  # string of actions
+        hand = history.main_data
+        action_history = history.secondary_data  # string of actions
+        player_num = 1 if len(action_history) % 2 == 0 else 2
 
-        self.perform_action(player_num, history[len(history) - 1])
-        if (self.is_terminal(history)):
-            return 1
+        if(len(action_history) > 0):
+            self.perform_action(player_num, action_history[len(action_history) - 1])
+
+        our_hand = history.main_data
+        (suit_count, straight_count) = self.create_auxiliary_information(our_hand)
+        (suit_count_enemy, straight_count_enemy) = self.create_auxiliary_information(self.hand2)
+
+        history.main_data = self.hand1 if player_num == 1 else self.hand2
+        if (self.is_terminal(straight_count)):
+            return 1000000000
         else:
-            (suit_count, straight_count) = self.create_auxiliary_information(hand)
-            enemy_hand = self.hand2 if player_num == 1 else self.hand1
-            (suit_count_enemy, straight_count_enemy) = self.create_auxiliary_information(hand2)
+            enemy_hand = self.hand2 if player_num == 1 else self.hand
+
+
+            p1_utility = (np.var(suit_count) * np.max(suit_count)) + (-np.var(straight_count) * np.max(straight_count))
+            p2_utility = (np.var(suit_count_enemy) * np.max(suit_count)) + (-np.var(straight_count_enemy)*np.max(straight_count))
+            p1_utility -= p2_utility
+
+            return p1_utility #in this case, p1_utility refers to the current player, not necessarily p1
+
+
+
 
     def get_all_actions(self):
         '''
@@ -130,8 +214,8 @@ class ToyGame:
         Note: convention is index i from 0...N means taking card i, burning it, and taking card from deck; index i from N+1...2*N means taking card (i-1)%N and swapping it with the burnt card
         '''
         if (len(self.deck) == 0):
-            for s in GameState.cards:
-                for c in GameState.suits:
+            for s in ToyGame.cards:
+                for c in ToyGame.suits:
                     self.deck.append(s + c)
             self.deck = random.shuffle(self.deck)
             return [i for i in range((ToyGame.N),
@@ -226,9 +310,9 @@ class RPS:
         '''
         util = 0
         for i in range(num_iter):
-            my_cards = random.shuffle(cards, 2)
+            my_cards = random.shuffle(KuhnPoker.cards, 2)
             print("CARDS: {}".format(my_cards))
-            util += kuhn_cfrm(my_cards, "", 1, 0)
+            util += KuhnPoker.kuhn_cfrm(my_cards, "", 1, 0)
 
 
 class KuhnPoker:
@@ -332,12 +416,6 @@ class KuhnPoker:
             util += self.kuhn_cfrm(cards, '', reach_probabilities, 0)
         print("Expected average utility: {}".format(float(util) / float(num_iter)))
         return util
-
-    def sf_train(self, num_iter):
-        util = 0
-        strat = []
-        for _ in range(num_iter):
-            t = ToyGame()
 
     def get_all_actions():
         return [0, 1]
@@ -447,3 +525,5 @@ print("BURN: {}".format(t.burn))
 
 print("AUXILIARY INFORMATION FOR HAND 1: {}".format(t.create_auxiliary_information(t.hand1)))
 print("AUXILIARY INFORMATION FOR HAND 2: {}".format(t.create_auxiliary_information(t.hand2)))
+history1 = HistoryState(t.hand1, '')
+print("HAND UTILITY: {}".format(t.utility(history1)))
