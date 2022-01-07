@@ -24,16 +24,17 @@ class HistoryState:
 class SFG_Trainer:
     def __init__(self, num_iter):
         self.num_iter = num_iter
+        self.info_map = {}
 
     def get_information_set(self, card_plus_history):
         if (card_plus_history not in self.info_map):
-            self.info_map[card_plus_history.secondary_data] = InformationSet(2)
+            self.info_map[card_plus_history.secondary_data] = InformationSet(12)
         return self.info_map[card_plus_history.secondary_data]
 
-    def sf_train(self, num_iter):
+    def sf_train(self):
         util = 0
         strat = []
-        for _ in range(num_iter):
+        for _ in range(self.num_iter):
             t = ToyGame()
             historyState = HistoryState(t.hand1, '')
             reach_probabilities = np.ones(2)
@@ -41,29 +42,63 @@ class SFG_Trainer:
 
     def sf_cfrm(self, cards, history: HistoryState, reach_probabilities, cur_player):
         '''
-        Apply CFR on our toy game (NOT COMPLETED)
+        Apply CFR on our toy game
         '''
-        if (ToyGame.is_terminal(history)):
-            return ToyGame.utility(cards, history)
+        print("CURRENT PLAYER: {}".format(cur_player))
+        cards_copy = copy.deepcopy(cards)
+        suit_count = []
+        straight_count = []
+        if (cards_copy.deck == None or len(cards_copy.deck)==0):
+            cards_copy.recreate_deck()
 
-        cards_copy = cards.copy()
-        cards_copy.perform_action(history[len(history) - 1], cur_player)
+        if(len(history.secondary_data) > 0):
+            print(history.secondary_data)
+            action = history.secondary_data[-1]
+            print("PERFORMING ACTION... {}, {}".format(history.secondary_data[-1], type(history.secondary_data[-1])))
+            int_action = ToyGame.action_to_index[history.secondary_data[len(history.secondary_data)-1]]
+            print("ACTION: {}, {}".format(int_action,type(int_action)))
+            cards_copy.perform_action(cur_player,int_action)
+
         cur_hand = cards_copy.hand1 if cur_player == 1 else cards_copy.hand2
-
+        enemy_hand = cards_copy.hand2 if len(history.secondary_data)%2 == 0 else cards_copy.hand1
 
         info_set = self.get_information_set(history)
         cur_strategy = info_set.getStrategy(reach_probabilities[cur_player])
+        cards_copy.create_auxiliary_information(cur_hand)
+
+        if (cards_copy.is_terminal(straight_count)):
+            print("GAME STATE SOLVED")
+            return ToyGame.utility(cards, history)
 
         cfr_vals = np.zeros(info_set.num_actions)
+        action_space = (cards_copy.get_all_actions())
+        random.shuffle(action_space)
 
-        for i, val in enumerate(cards_copy.get_all_actions()):
-            action_prob = cur_strategy[i]
+        print("ACTION SPACE: {}".format(action_space))
+
+        for i, val in enumerate(action_space):
+            print("PERFORMED ACTION: {}".format(val))
+
+            action_prob = cur_strategy[val]
             nxt_reach = reach_probabilities.copy()
             nxt_reach[cur_player] *= action_prob
 
-            new_history = history.copy()
-            new_history.secondary_data += ToyGame.index_to_action[val]
-            cfr_vals[i] = -self.sf_cfrm(cards_copy, new_history, nxt_reach, ((cur_player + 1) % 2)+1 )
+
+
+            new_history = copy.deepcopy(history)
+
+            if(type(val)==int):
+                val = ToyGame.index_to_action[val]
+
+            if(val[-1]==','):
+                val=val[0:len(val)-1]
+
+            print("PERFORMED ACTION: {}".format(val))
+
+            new_history.secondary_data += val
+            new_history.main_data  = enemy_hand
+
+            cfr_vals[i] = -self.sf_cfrm(cards_copy, new_history, nxt_reach,  (cur_player+1)%2)
 
         node_value = cfr_vals.dot(cur_strategy)
         for i, val in enumerate(ToyGame.get_all_actions()):
@@ -81,23 +116,28 @@ class ToyGame:
                 'A': 14}
     index_to_action = {}
     action_to_index = {}
-    N = 6
+    N = 3
 
     def __init__(self):
-        action_rep = ['0', '1', '2', '3', '4', '5', '6', '7,', '8', '9', 'T', 'E']
+        action_rep = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'E']
         for i in range(len(action_rep)):
             ToyGame.index_to_action[i] = action_rep[i]
             ToyGame.action_to_index[action_rep[i]] = i
-
-        self.deck = []
-        for s in ToyGame.cards:
-            for c in ToyGame.suits:
-                self.deck.append(s + c)
-        random.shuffle(self.deck)
-        self.burn = []
+        self.hand1 = []
+        self.hand2 = []
+        self.recreate_deck()
         self.create_hand(1)
         self.create_hand(2)
 
+    def recreate_deck(self):
+        self.deck = []
+        for s in ToyGame.cards:
+            for c in ToyGame.suits:
+                if( (s+c) in self.hand1 or (s+c) in self.hand2):
+                    continue
+                self.deck.append(s + c)
+        random.shuffle(self.deck)
+        self.burn = []
     def create_hand(self, player_num):
         ptr = 0
         m_hand = []
@@ -192,18 +232,16 @@ class ToyGame:
         (suit_count, straight_count) = self.create_auxiliary_information(our_hand)
         (suit_count_enemy, straight_count_enemy) = self.create_auxiliary_information(self.hand2)
 
-        history.main_data = self.hand1 if player_num == 1 else self.hand2
-        if (self.is_terminal(straight_count)):
-            return 1000000000
-        else:
-            enemy_hand = self.hand2 if player_num == 1 else self.hand
+        history.main_data = self.hand1 if player_num == 0 else self.hand2
+
+        enemy_hand = self.hand2 if player_num == 0 else self.hand1
 
 
-            p1_utility = (np.var(suit_count) * np.max(suit_count)) + (-np.var(straight_count) * np.max(straight_count))
-            p2_utility = (np.var(suit_count_enemy) * np.max(suit_count)) + (-np.var(straight_count_enemy)*np.max(straight_count))
-            p1_utility -= p2_utility
+        p1_utility = (np.var(suit_count) * np.max(suit_count)) + (-np.var(straight_count) * np.max(straight_count))
+        p2_utility = (np.var(suit_count_enemy) * np.max(suit_count)) + (-np.var(straight_count_enemy)*np.max(straight_count))
+        p1_utility -= p2_utility
 
-            return p1_utility #in this case, p1_utility refers to the current player, not necessarily p1
+        return p1_utility #in this case, p1_utility refers to the current player, not necessarily p1
 
 
 
@@ -218,24 +256,24 @@ class ToyGame:
                 for c in ToyGame.suits:
                     self.deck.append(s + c)
             self.deck = random.shuffle(self.deck)
+            self.burn = []
             return [i for i in range((ToyGame.N),
                                      2 * ToyGame.N)]  # if deck is empty, all the action that can be done is draw from the top burn card
         elif (len(self.burn) == 0):
             return [i for i in range(0, ToyGame.N)]
         else:
             return [i for i in
-                    range(2 * ToyGame.N)]  # otherwise, we can choose to get the top card from the deck or top burn card
+                    range(0, 2 * ToyGame.N)]  # otherwise, we can choose to get the top card from the deck or top burn card
 
     def perform_action(self, player_num, action_type):
-
-        if (player_num == 1):
+        if (player_num == 0):
             if (0 <= action_type < ToyGame.N):
                 cur_hand = self.hand1[action_type]
                 self.hand1[action_type] = self.deck[0]
                 self.deck = self.deck[1:]
                 self.burn.append(cur_hand)
                 return self.hand1
-            else:
+            elif(len(self.burn)>0):
                 self.hand1[action_type % len(self.hand1)] = self.burn[0]
                 self.burn = self.burn[0:len(self.burn) - 1]
                 return self.hand1
@@ -246,25 +284,12 @@ class ToyGame:
                 self.deck = self.deck[1:]
                 self.burn.append(cur_hand)
                 return self.hand2
-            else:
-                self.hand2[action_type % len(self.hand)] = self.burn[len(self.burn) - 1]
+            elif(len(self.burn)>0):
+                self.hand2[action_type % len(self.hand1)] = self.burn[len(self.burn) - 1]
                 self.burn = self.burn[0:len(self.burn) - 1]
                 return self.hand2
 
 
-class HistoryState:
-    '''
-    Maintain a more complex history state for our CFR algorithm; allows for better utility functions & more reliable strategies
-
-    For our toy game, auxiliary data will cointain : [#hearts in hand, #diamonds in hand, #spades in hand, #clubs in hand, length of attempted straight flush 1, length of attempted straight flush 2, .... ] of length 8
-    and our main data will be our hand, and secondary data will maintain the actions taken to reach our current hand
-    '''
-
-    burn_recall = 5  # potential optimization only remember the top k burn cards, or potentially remember certain cards with a weighted factor
-
-    def __init__(self, main_data: ToyGame, secondary_data='', auxiliary_data=np.zeros(8)):
-        self.main_data = main_data
-        self.secondary_data = secondary_data
 
 
 class RPS:
@@ -398,6 +423,7 @@ class KuhnPoker:
             nxt_reach = reach_probabilities.copy()
             nxt_reach[cur_player] *= action_prob
 
+            new_history = history.copy()
             new_history.secondary_data += ToyGame.index_to_action[val]
             cfr_vals[i] = -self.vanilla_cfrm(cards_copy, new_history, nxt_reach, (cur_player + 1) % 2)
 
@@ -527,3 +553,8 @@ print("AUXILIARY INFORMATION FOR HAND 1: {}".format(t.create_auxiliary_informati
 print("AUXILIARY INFORMATION FOR HAND 2: {}".format(t.create_auxiliary_information(t.hand2)))
 history1 = HistoryState(t.hand1, '')
 print("HAND UTILITY: {}".format(t.utility(history1)))
+
+
+test_cfr = ToyGame()
+run_cfr = SFG_Trainer(1000)
+run_cfr.sf_train()
