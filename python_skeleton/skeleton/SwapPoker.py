@@ -1,26 +1,75 @@
-from python_skeleton.skeleton.actions import FoldAction, CallAction, RaiseAction, CheckAction
-from python_skeleton.skeleton.states import GameState, RoundState
-import typing
-import MCCFR
+from actions import FoldAction, RaiseAction, CheckAction
+from states import RoundState
+import Evaluator
+
+
 
 class SwapPoker:
     def __init__(self, game_state, round_state, board_cards):
-        self.game_state = game_state
+        self.game_state = game_state #store pot size, hole c
         self.round_state = round_state
         self.board_cards = board_cards
-        self.monte_carlo_solver = MCCFR()
 
     def update_board(self, new_board):
         self.board_cards = new_board
 
+    def poker(self, hands):
+        scores = [(i, self.score(hand.split())) for i, hand in enumerate(hands)]
+        winner = sorted(scores, key=lambda x: x[1])[-1][0]
+        return hands[winner]
 
-    @staticmethod
-    def utility(self, history):
-        current_player = 0 if len(history)%2 == 0 else 1
-        if(isinstance(self.p1_last_action, FoldAction)):
-            pass
-        else:
-            pass
+    def score(self, hand):
+        ranks = '23456789TJQKA'
+        rcounts = {ranks.find(r): ''.join(hand).count(r) for r, _ in hand}.items()
+        score, ranks = zip(*sorted((cnt, rank) for rank, cnt in rcounts)[::-1])
+        if len(score) == 5:
+            if ranks[0:2] == (12, 3):  # adjust if 5 high straight
+                ranks = (3, 2, 1, 0, -1)
+            straight = ranks[0] - ranks[4] == 4
+            flush = len({suit for _, suit in hand}) == 1
+            '''no pair, straight, flush, or straight flush'''
+            score = ([1, (3, 1, 1, 1)], [(3, 1, 1, 2), (5,)])[flush][straight]
+        return score, ranks
+
+
+    def utility(cfr_game_state, history, cur_player):
+       if(len(history)>= 3 and history[-3:] == 'FLD'):
+           return cfr_game_state.pot_size
+       else:
+           '''
+           implement showdown and see who gets the utility
+           '''
+           board_state = cfr_game_state.board_cards
+           p1 = cfr_game_state.p1_hole
+           p2 = cfr_game_state.p2_hole
+
+
+           ret = Evaluator.evaluate_cards(*((board_state+p1)))
+           ret2 = Evaluator.evaluate_cards(*((board_state+p2)))
+
+
+           print("RET VALUES: {}, {}".format(ret, ret2))
+           if(ret < ret2):
+               if(cur_player==0):
+                    return cfr_game_state.pot_size
+               else:
+                    return -(2000 - float(cfr_game_state.pot_size)/2)
+           if(ret2 < ret):
+                if(cur_player == 1):
+                    return cfr_game_state.pot_size
+                else:
+                    return -(2000 - float(cfr_game_state.pot_size)/2)
+           return 0
+
+
+
+
+
+    def apply_actions(self, last_action):
+        if(last_action[0] == 'R'):
+            self
+    def train_abstract_actions(self, player_id):
+        possible_actions = ['R66', 'R25', 'R75', 'R125', 'F', 'C']
 
 
 

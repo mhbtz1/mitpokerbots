@@ -10,7 +10,7 @@ class PreflopHandRanges:
     BB_5BET = eval7.HandRange('JJ-AA, AKo, AKs, 0.5(AQs,TT)')
     BB_CALL_VERSUS_4BET = eval7.HandRange('TT-44,AQs-A8s,A5s-A2s,K7s+,Q8s+,J8s+,T8s+,97s+,87s,76s,65s,54s,43s,AQo-AJo,KQo')
 
-    sequence = [BTN_RFI, BB_CALL, BB_3BET, BTN_CALL_VERSUS_3BET, BTN_4BET, BB_CALL, BB_CALL_VERSUS_5BET]
+    sequence = [BTN_RFI, BB_CALL, BB_3BET, BTN_CALL_VERSUS_3BET, BTN_4BET, BB_CALL, BB_CALL_VERSUS_4BET]
 
 
 
@@ -29,13 +29,14 @@ class RangeEvaluator():
             elif(isinstance(current_action, CallAction)):
                 pass
             elif(isinstance(current_action, RaiseAction)):
-                pass
+                amount = current_action['amount']
         else:
             if(isinstance(current_action,CheckAction)):
                 pass
             elif(isinstance(current_action, CallAction)):
                 pass
-            elif(isintance(current_action, RaiseAction)):
+            elif(isinstance(current_action, RaiseAction)):
+                amount = current_action['amount']
                 pass
 
 

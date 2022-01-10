@@ -15,10 +15,6 @@ def create_bucketing():
     '''
     middle pocket pairs
     '''
-
-
-
-
     '''
     Jack, ten, or nine high disconnected hands
     '''
