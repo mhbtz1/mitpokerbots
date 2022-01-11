@@ -153,6 +153,7 @@ class CFR_Game_State:
     def apply_action(self, history, action_string, player_num):
        print("HISTORY: {}, ACTION: {}".format(history,action_string))
        if(action_string[0]=='R'):#raise
+           self.ACTIONS_PER_STREET += 1
            relsize = 2 if action_string[1:]=='CC' else float(int(action_string[1:]))/100
            raiseamt = relsize*self.pot_size
            self.pot_size += raiseamt
@@ -160,10 +161,10 @@ class CFR_Game_State:
                self.p1_stack -= raiseamt
            else:
                self.p2_stack -= raiseamt
-           self.ACTIONS_PER_STREET += 1
        elif(action_string=='CHK'):#check
            self.ACTIONS_PER_STREET += 1
        elif(action_string=='CAL'): #call a raise
+           self.ACTIONS_PER_STREET += 1
            last_action = '' if len(history) < 3 else history[-3:]
            if(last_action != ''):
                conv_bet = 2 if last_action[1:] == 'CC' else float(int(last_action[1:])) / 100
@@ -176,20 +177,37 @@ class CFR_Game_State:
                    self.pot_size += original_bet_size
 
 
-       if(self.ACTIONS_PER_STREET == self.MAX_ACTIONS_PER_STREET):
-           self.ACTIONS_PER_STREET=0
-           print("ADVANCED BOARD")
-           if(len(self.board_cards)<5):
-              self.board_cards += [self.deck[0]]
-              del self.deck[0]
-
 
     def get_all_actions(self, history, player_num):
         '''
-        Default ordering is: R66, R75, R80, R200, C66, C75, C80, C200, CHK, FLD
+        Default ordering is: R66, R75, R80, R200, CAL, CHK, FLD
         '''
+
+
         default_actions = ['R66', 'R75', 'R80', 'RCC', 'CAL', 'CHK', 'FLD']
         last_action = '' if len(history) < 3 else history[-3:]
+
+        if(self.ACTIONS_PER_STREET == self.MAX_ACTIONS_PER_STREET):
+            self.ACTIONS_PER_STREET = 0
+            print("ADVANCED BOARD")
+            if (len(self.board_cards) < 5):
+                self.board_cards += [self.deck[0]]
+                del self.deck[0]
+            for i in range(len(default_actions)-1,-1,-1):
+                if(default_actions[i][0]=='R'):
+                    del default_actions[i]
+        if(last_action=='CAL'):
+            self.ACTIONS_PER_STREET = 0
+            print("ADVANCED BOARD")
+            if (len(self.board_cards) < 5):
+                self.board_cards += [self.deck[0]]
+                del self.deck[0]
+            if('CAL' in default_actions):
+                del default_actions[default_actions.index('CAL')]
+            if('FLD' in default_actions):
+                del default_actions[default_actions.index('FLD')]
+
+
         '''
         remove actions based upon the bet sizes our stack allows us to do
         '''
@@ -197,6 +215,7 @@ class CFR_Game_State:
             action = default_actions[i]
             if(action == 'CHK' or action == 'CAL' or action == 'FLD'):
                 continue
+
             sizing = 2 if action[1:]=='CC' else float(int(action[1:]))/100
             truesize = sizing * self.pot_size
             if(player_num == 0):
@@ -223,7 +242,7 @@ class CFR_Game_State:
                         betsize = amt * self.pot_size
                         lamt = 2 if last_action[1:]=='CC' else float(int(last_action[1:]))/100
                         lsize = (float(lamt)/(1 + lamt)) * self.pot_size
-                        print("LAST BET SIZE: {}".format(lsize), 'CURRENT BET SIZE: {}'.format(betsize))
+                        print("CURRENT BET SIZE: {}".format(lsize), 'FUTURE BET SIZE: {}'.format(betsize))
                         if(player_num==0):
                             if(betsize > self.p2_stack or lsize * 2 > betsize):
                                 del default_actions[i]
@@ -274,7 +293,7 @@ class MCCFR():
 
     def get_information_set(self, card_plus_history):
         if (card_plus_history not in self.info_map):
-                self.info_map[card_plus_history] = InformationSet(11)
+                self.info_map[card_plus_history] = InformationSet(8)
         return self.info_map[card_plus_history]
 
 
@@ -327,7 +346,7 @@ class MCCFR():
 
 
 
-
+'''
 cfr_run = MCCFR()
 util = 0
 for i in range(200):
@@ -335,7 +354,7 @@ for i in range(200):
     reach_prob = np.ones(2)
     ip_player = 1 if random.uniform(0,1) <= 0.5 else 0
 
-    cfr_test = CFR_Game_State(['2d', '3s', '4c'], ['Ad', 'Ah'], 2000, ['Qc', 'Qs'], 2000, 0, 20)
+    cfr_test = CFR_Game_State(['As', 'Ac', 'Qh'], ['Ad', 'Ah'], 2000, ['Qc', 'Qs'], 2000, 0, 20)
     util += cfr_run.mc_cfrm(cfr_test, '', reach_prob, (ip_player+1)%2)
     print("ITERATION COMPLETE!")
     CFR_Game_State.BETS_ARE_DONE=False
@@ -349,39 +368,52 @@ for (pos, strat) in info_sets.items():
     rep_strat = [float(s) for s in strat.strategy]
     print(pos,rep_strat)
 
-
-
+print(len(info_sets.keys()))
 '''
-cfr_test_run = CFR_Game_State(['Ac', '5s', 'Qd'], ['Qs', '9s'], 2000, ['Kc', '9c'], 2000, 0, 25)
-print(cfr_test_run.get_all_actions('',0))
 
-print("POT SIZE: {}".format(cfr_test_run.pot_size))
+
+cfr_test_run = CFR_Game_State(['Ac', '5s', 'Qd'], ['Qs', '9s'], 2000, ['Kc', '9c'], 2000, 0, 25)
+
+print(cfr_test_run.get_all_actions('',0))
 cfr_test_run.apply_action('', 'RCC', 1)
+print('--------------------------------------------------------')
 print("POT SIZE: {}".format(cfr_test_run.pot_size))
+print("NUMBER OF ACTIONS: {}".format(cfr_test_run.ACTIONS_PER_STREET))
 print(cfr_test_run.board_cards)
 print(cfr_test_run.p1_stack, cfr_test_run.p2_stack)
 print(cfr_test_run.get_all_actions('RCC', 0))
 cfr_test_run.apply_action('RCC', 'RCC', 0)
+print('--------------------------------------------------------')
 print("POT SIZE: {}".format(cfr_test_run.pot_size))
+print("NUMBER OF ACTIONS: {}".format(cfr_test_run.ACTIONS_PER_STREET))
 print(cfr_test_run.board_cards)
 print(cfr_test_run.p1_stack, cfr_test_run.p2_stack)
-print(cfr_test_run.get_all_actions('RCCRCC',1))
-cfr_test_run.apply_action('RCCRCCC', 'RCC', 1)
+cfr_test_run.get_all_actions('RCCRCC',1)
+cfr_test_run.apply_action('RCCRCCC', 'CAL', 1)
+print("--------------------------------------------------------------")
 print("POT SIZE: {}".format(cfr_test_run.pot_size))
+print("NUMBER OF ACTIONS: {}".format(cfr_test_run.ACTIONS_PER_STREET))
 print(cfr_test_run.board_cards)
 print(cfr_test_run.p1_stack, cfr_test_run.p2_stack)
-print(cfr_test_run.get_all_actions('RCCRCC',0))
-cfr_test_run.apply_action('RCCCRCCRCC','RCC',0)
+cfr_test_run.get_all_actions('RCCRCC',0)
+cfr_test_run.apply_action('RCCCRCCCAL','RCC',0)
+print('--------------------------------------------------------')
 print("POT SIZE: {}".format(cfr_test_run.pot_size))
+print("NUMBER OF ACTIONS: {}".format(cfr_test_run.ACTIONS_PER_STREET))
 print(cfr_test_run.board_cards)
 print(cfr_test_run.p1_stack, cfr_test_run.p2_stack)
-print(cfr_test_run.get_all_actions('RCCRCCRCCRCC',1))
+cfr_test_run.get_all_actions('RCCRCCRCCRCC',1)
 cfr_test_run.apply_action('RCCCRCCRCCRCC','CAL',1)
+print('--------------------------------------------------------')
 print("POT SIZE: {}".format(cfr_test_run.pot_size))
 print(cfr_test_run.board_cards)
 print(cfr_test_run.p1_stack, cfr_test_run.p2_stack)
-print(cfr_test_run.get_all_actions('RCCRCCRCCRCCCAL',1))
-'''
+cfr_test_run.get_all_actions('RCCRCCRCCRCCCAL',1)
+
+
+#cfr_test_run.ACTIONS_PER_STREET = 2
+#cfr_test_run.get_all_actions('RCCRCC', 0)
+
 
 
 
