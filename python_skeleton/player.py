@@ -22,7 +22,8 @@ class Player(Bot):
         action = random.sample(legal_actions,1)[0]
         ans = 0
         if(action is RaiseAction):
-            ans = RaiseAction(min_raise)
+            print("MIN RAISE: {}".format(min_raise))
+            ans = RaiseAction(min_raise*2)
         else:
             ans = FoldAction()
         print("ACTION: {}".format(ans))
@@ -74,12 +75,11 @@ class Player(Bot):
         '''
         boardtype.initialise_flop_dict()
         self.current_line = ""
-        self.count_preflop_actions = 0
         self.map_preflop_ranges = {}
         self.map_preflop_ranges['PREFLOP_SRP'] = (Preflop.PreflopHandRanges.BTN_RFI, Preflop.PreflopHandRanges.BB_CALL)
         self.map_preflop_ranges['PREFLOP_3BET'] = (Preflop.PreflopHandRanges.BTN_CALL_VERSUS_3BET, Preflop.PreflopHandRanges.BB_3BET)
         self.map_preflop_ranges['PREFLOP_4BET'] = (Preflop.PreflopHandRanges.BTN_4BET, Preflop.PreflopHandRanges.BB_CALL_VERSUS_4BET)
-        #self.map_preflop_ranges['PREFLOP_5BET'] = (Preflop.PreflopHandRanges.BTN_CALL_VERSUS_5BET, Preflop.PreflopHandRanges.BB_5BET)
+        self.map_preflop_ranges['PREFLOP_5BET'] = (Preflop.PreflopHandRanges.BB_5BET)
         self.cur_range = ()
         self.range_state = -1
         self.PREFLOP_AGGRESSOR = -1
@@ -265,10 +265,10 @@ class Player(Bot):
             min_raise, max_raise = round_state.raise_bounds()
             if(action==0):
                 print(0.66*pot_size)
-                if(RaiseAction in legal_actions):
-                    amt = int(0.66*pot_size)
-                    amt = min(max_raise,int(0.66*pot_size))
-                    amt = max(min_raise,int(0.66*pot_size))
+                amt = int(0.66 * pot_size)
+                amt = min(max_raise, int(0.66 * pot_size))
+                amt = max(min_raise, int(0.66 * pot_size))
+                if(RaiseAction in legal_actions and amt <= my_stack):
                     r = RaiseAction(amt)
                     return r
                 elif(CheckAction in legal_actions):
@@ -279,10 +279,10 @@ class Player(Bot):
                     return FoldAction()
             elif(action==1):
                 print(0.75 * pot_size)
-                if(RaiseAction in legal_actions):
-                    amt = int(0.75 * pot_size)
-                    amt = min(max_raise, int(0.66 * pot_size))
-                    amt = max(min_raise, int(0.66 * pot_size))
+                amt = int(0.75 * pot_size)
+                amt = min(max_raise, int(0.66 * pot_size))
+                amt = max(min_raise, int(0.66 * pot_size))
+                if(RaiseAction in legal_actions and amt <= my_stack):
                     r = RaiseAction(amt)
                     return r
                 elif(CheckAction in legal_actions):
@@ -291,10 +291,10 @@ class Player(Bot):
                     return FoldAction()
             elif(action == 2):
                 print(0.80 * pot_size)
-                if(RaiseAction in legal_actions):
-                    amt = int(0.80*pot_size)
-                    amt = min(max_raise, int(0.80 * pot_size))
-                    amt = max(min_raise, int(0.80 * pot_size))
+                amt = int(0.80 * pot_size)
+                amt = min(max_raise, int(0.80 * pot_size))
+                amt = max(min_raise, int(0.80 * pot_size))
+                if(RaiseAction in legal_actions and amt <= my_stack):
                     r = RaiseAction(amt)
                     return r
                 elif(CheckAction in legal_actions):
@@ -305,10 +305,10 @@ class Player(Bot):
                     return FoldAction()
             elif(action == 3):
                 print(2 * pot_size)
-                if(RaiseAction in legal_actions):
-                    amt = int(2* pot_size)
-                    amt = min(max_raise, int(2 * pot_size))
-                    amt = max(min_raise, int(2 * pot_size))
+                amt = int(2 * pot_size)
+                amt = min(max_raise, int(2 * pot_size))
+                amt = max(min_raise, int(2 * pot_size))
+                if(RaiseAction in legal_actions and amt <= my_stack):
                     r = RaiseAction(amt)
                     return r
                 elif(CheckAction in legal_actions):
@@ -330,7 +330,14 @@ class Player(Bot):
                     print("RUN THIS")
                     return self.do_random_action(legal_actions,min_raise)
             elif(action == 6):
-                return FoldAction()
+                if(FoldAction in legal_actions):
+                    return FoldAction()
+                elif(CheckAction in legal_actions):
+                    return CheckAction()
+                elif(CallAction in legal_actions):
+                    return CallAction()
+                elif(RaiseAction in legal_actions):
+                    return RaiseAction(min_raise)
 
         #note: if cfr bot acts too aggressive and fucks us over, do some river heuristic coding to alleviate
 

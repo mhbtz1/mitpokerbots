@@ -223,7 +223,7 @@ def boardtype(flop):
     high_trips_flops = [("9s", "9c", "9d"), ("Js", "Jc", "Jd"), ("Ks", "Kc", "Kd")]
 
     if high_card == middle_card == low_card: 
-        if flop.high_card <= 7:
+        if high_card <= 7:
             return ("low_trips", low_trips_flops)
         else: 
             return ("high_trips", high_trips_flops) 
