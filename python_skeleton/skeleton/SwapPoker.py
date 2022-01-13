@@ -1,6 +1,7 @@
 from actions import FoldAction, RaiseAction, CheckAction
 from states import RoundState
 import Evaluator
+import math
 
 
 
@@ -51,23 +52,18 @@ class SwapPoker:
            print("RET VALUES: {}, {}".format(ret, ret2))
            if(ret < ret2):
                if(cur_player==0):
-                    return cfr_game_state.pot_size
+                    return math.log(cfr_game_state.pot_size)
                else:
-                    return -(2000 - float(cfr_game_state.pot_size)/2)
+                    return -math.log(cfr_game_state.pot_size)
            if(ret2 < ret):
                 if(cur_player == 1):
-                    return cfr_game_state.pot_size
+                    return math.log(cfr_game_state.pot_size)
                 else:
-                    return -(2000 - float(cfr_game_state.pot_size)/2)
+                    return -math.log(cfr_game_state.pot_size)
            return 0
 
 
 
-
-
-    def apply_actions(self, last_action):
-        if(last_action[0] == 'R'):
-            self
     def train_abstract_actions(self, player_id):
         possible_actions = ['R66', 'R25', 'R75', 'R125', 'F', 'C']
 
