@@ -1,18 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Jan 12 00:15:51 2022
 
-@author: hajunglee
-"""
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 11 12:26:58 2022
-
-@author: hajunglee
-"""
 
 import copy 
 import numpy as np 
@@ -28,46 +16,46 @@ suit_map = {
 }
 
 flop_dict = {}
-
+map_names = {}
 
 def initialise_flop_dict():
     global flop_dict
     low_trips_flops = [("2s", "2c", "2d"), ("4s", "4d", "4h"), ("6c", "6d", "6h")]
     high_trips_flops = [("9s", "9c", "9d"), ("Js", "Jc", "Jd"), ("Ks", "Kc", "Kd")]
-    flop_dict['low_trips_flops'] = ('LTF', low_trips_flops)
-    flop_dict['high_trips_flops'] = ('HTF', high_trips_flops)
+    flop_dict['low_trips_flops'] = ('001', low_trips_flops)
+    flop_dict['high_trips_flops'] = ('002', high_trips_flops)
     low_connected_monotone = [("9s", "7s", "5s"), ("6s", "4s", "3s"), ("8s", "4s", "3s")]
     low_disconnected_monotone = [("9s", "6s", "2s"), ("Ts", "7s", "3s"), ("Ts", "6s", "3s")]
     high_monotone = [("Ks", "9s", "6s"), ("Qs", "8s", "3s"), ("As", "7s", "5s")]
     high_flopped_straight_monotone = [("As", "Ks", "Ts"), ("Ks", "Js", "9s"), ("Qs", "Js", "8s")]
-    flop_dict['low_connected_monotone'] = ('LCM', low_connected_monotone)
-    flop_dict['low_disconnected_monotone'] = ('LDCM', low_disconnected_monotone)
-    flop_dict['high_monotone'] = ('HM', high_monotone)
-    flop_dict['high_flopped_straight_monotone'] = ('HFSM', high_flopped_straight_monotone)
+    flop_dict['low_connected_monotone'] = ('003', low_connected_monotone)
+    flop_dict['low_disconnected_monotone'] = ('004', low_disconnected_monotone)
+    flop_dict['high_monotone'] = ('005', high_monotone)
+    flop_dict['high_flopped_straight_monotone'] = ('006', high_flopped_straight_monotone)
     low_paired_low_side_rainbow = [("3s", "3d", "2h"), ("5s", "5d", "7h"), ("7s", "7d", "3h")]
     low_paired_low_side_fd = [("3s", "3d", "2s"), ("5s", "5d", "7s"), ("7s", "7d", "3s")]
     low_paired_ak_side_rainbow = [("6s", "6d", "Ah"), ("4s", "4d", "Kh"), ("3s", "3d", "Ac")]
     low_paired_ak_side_fd = [("6s", "6d", "As"), ("4s", "4d", "Ks"), ("3s", "3d", "As")]
     low_paired_high_side_rainbow = [("2s", "2d", "Th"), ("4s", "4d", "Qh"), ("6s", "6d", "Jh")]
     low_paired_high_side_fd = [("2s", "2d", "Ts"), ("4s", "4d", "Qs"), ("6s", "6d", "Js")]
-    flop_dict['low_paired_low_side_rainbow'] = ('LPLSR', low_paired_low_side_rainbow)
-    flop_dict['low_paired_low_side_fd'] = ('LPLSFD', low_paired_low_side_fd)
-    flop_dict['low_paired_ak_side_rainbow'] = ('LPLAKSR', low_paired_ak_side_rainbow)
-    flop_dict['low_paired_ak_side_fd'] = ('LPAKSFD', low_paired_ak_side_fd)
-    flop_dict['low_paired_high_side_rainbow'] = ('LPLHSR', low_paired_low_side_rainbow)
-    flop_dict['low_paired_high_side_fd'] = ('LPLHSFD', low_paired_high_side_fd)
+    flop_dict['low_paired_low_side_rainbow'] = ('007', low_paired_low_side_rainbow)
+    flop_dict['low_paired_low_side_fd'] = ('008', low_paired_low_side_fd)
+    flop_dict['low_paired_ak_side_rainbow'] = ('009', low_paired_ak_side_rainbow)
+    flop_dict['low_paired_ak_side_fd'] = ('010', low_paired_ak_side_fd)
+    flop_dict['low_paired_high_side_rainbow'] = ('011', low_paired_low_side_rainbow)
+    flop_dict['low_paired_high_side_fd'] = ('012', low_paired_high_side_fd)
     high_paired_low_side_rainbow = [("As", "Ad", "3h"), ("Ks", "Kd", "6h"), ("Qs", "Qd", "2h")]
     high_paired_low_side_fd = [("As", "Ad", "3s"), ("Ks", "Kd", "6s"), ("Qs", "Qd", "2s")]
     high_paired_high_side_rainbow = [("As", "Ad", "Kh"), ("Ks", "Kd", "Th"), ("Ts", "Td", "Ah")]
     high_paired_high_side_fd = [("As", "Ad", "Ks"), ("Ks", "Kd", "Ts"), ("Ts", "Td", "As")]
-    flop_dict['high_paired_low_side_rainbow'] = ('HPLSR',high_paired_low_side_rainbow)
-    flop_dict['high_paired_low_side_fd'] = ('HPLSFD', high_paired_low_side_fd)
-    flop_dict['high_paired_high_side_rainbow'] = ('HPHSR', high_paired_high_side_rainbow)
-    flop_dict['high_paired_high_side_fd'] = ('HPHSFD', high_paired_high_side_fd)
+    flop_dict['high_paired_low_side_rainbow'] = ('013',high_paired_low_side_rainbow)
+    flop_dict['high_paired_low_side_fd'] = ('014', high_paired_low_side_fd)
+    flop_dict['high_paired_high_side_rainbow'] = ('015', high_paired_high_side_rainbow)
+    flop_dict['high_paired_high_side_fd'] = ('016', high_paired_high_side_fd)
     triple_broadway_rainbow = [("As", "Qc", "Td"), ("Ks", "Jc", "Td"), ("As", "Qc", "Jd")]
     triple_broadway_fd = [("As", "Qc", "Ts"), ("Ks", "Jc", "Ts"), ("As", "Qc", "Js")]
-    flop_dict['triple_broadway_rainbow'] = ('TBR', triple_broadway_rainbow)
-    flop_dict['triple_broadway_fd'] = ('TBFD', triple_broadway_fd)
+    flop_dict['triple_broadway_rainbow'] = ('017', triple_broadway_rainbow)
+    flop_dict['triple_broadway_fd'] = ('018', triple_broadway_fd)
     a_low_low_rainbow = [("As", "5c", "4d"), ("As", "4c", "3d"), ("As", "4c", "2d")]
     a_low_low_fd = [("As", "6c", "4s"), ("As", "4c", "3s"), ("As", "4c", "2s")]
     dry_a_high_rainbow = [("As", "9c", "4d"), ("As", "8c", "2d"), ("As", "7c", "3d")]
@@ -76,62 +64,62 @@ def initialise_flop_dict():
     a_high_straightdraw_fd = [("As", "8c", "7s"), ("As", "9c", "7s"), ("As", "7s", "6s")]
     a_high_double_broadway_rainbow = [("As", "Kc", "2d"), ("As", "Qc", "6d"), ("As", "Tc", "5d")]
     a_high_double_broadway_fd = [("As", "Kc", "2s"), ("As", "Qc", "6s"), ("As", "Tc", "5s")]
-    flop_dict['a_low_low_rainbow'] = ('ALLR', a_low_low_rainbow)
-    flop_dict['a_low_low_fd'] = ('ALLFD', a_low_low_fd)
-    flop_dict['dry_a_high_rainbow'] = ('DAHR', dry_a_high_rainbow)
-    flop_dict['dry_a_high_fd'] = ('DAHFD', dry_a_high_fd)
-    flop_dict['a_high_straightdraw_rainbow'] = ('AHSDR', a_high_straightdraw_rainbow)
-    flop_dict['a_high_straightdraw_fd'] = ('AHSDFD', a_high_straightdraw_fd)
-    flop_dict['a_high_double_broadway_rainbow'] = ('AHDBR', a_high_double_broadway_rainbow)
-    flop_dict['a_high_double_broadway_fd'] = ('AHDBFD', a_high_double_broadway_fd)
+    flop_dict['a_low_low_rainbow'] = ('019', a_low_low_rainbow)
+    flop_dict['a_low_low_fd'] = ('020', a_low_low_fd)
+    flop_dict['dry_a_high_rainbow'] = ('021', dry_a_high_rainbow)
+    flop_dict['dry_a_high_fd'] = ('022', dry_a_high_fd)
+    flop_dict['a_high_straightdraw_rainbow'] = ('023', a_high_straightdraw_rainbow)
+    flop_dict['a_high_straightdraw_fd'] = ('024', a_high_straightdraw_fd)
+    flop_dict['a_high_double_broadway_rainbow'] = ('025', a_high_double_broadway_rainbow)
+    flop_dict['a_high_double_broadway_fd'] = ('026', a_high_double_broadway_fd)
     dry_k_high_rainbow = [("Ks", "7c", "2d"), ("Ks", "9c", "3d"), ("Ks", "8s", "4d")]
     dry_k_high_fd = [("Ks", "7c", "2s"), ("Ks", "9c", "3s"), ("Ks", "8s", "4s")]
     k_high_double_broadway_rainbow = [("Ks", "Qc", "8d"), ("Ks", "Tc", "5d"), ("Ks", "Jc", "5d")]
     k_high_double_broadway_fd = [("Ks", "Qc", "8s"), ("Ks", "Tc", "5s"), ("Ks", "Jc", "5s")]
     k_high_connected_rainbow = [("Ks", "9c", "7d"), ("Ks", "7c", "6d"), ("Ks", "5c", "4d")]
     k_high_connected_fd = [("Ks", "9c", "8s"), ("Ks", "8c", "7s"), ("Ks", "5c", "4s")]
-    flop_dict['dry_k_high_rainbow'] = ('DKHR', dry_k_high_fd)
-    flop_dict['dry_k_high_fd'] = ('DKHFD', dry_k_high_fd)
-    flop_dict['k_high_double_broadway_rainbow'] = ('KHDBR', k_high_double_broadway_rainbow)
-    flop_dict['k_high_double_broadway_fd'] = ('KHDBFD', k_high_double_broadway_fd)
-    flop_dict['k_high_connected_rainbow'] = ('KHCR', k_high_connected_rainbow)
-    flop_dict['k_high_connected_fd'] = ('KHCFD', k_high_connected_fd)
+    flop_dict['dry_k_high_rainbow'] = ('027', dry_k_high_fd)
+    flop_dict['dry_k_high_fd'] = ('028', dry_k_high_fd)
+    flop_dict['k_high_double_broadway_rainbow'] = ('029', k_high_double_broadway_rainbow)
+    flop_dict['k_high_double_broadway_fd'] = ('030', k_high_double_broadway_fd)
+    flop_dict['k_high_connected_rainbow'] = ('031', k_high_connected_rainbow)
+    flop_dict['k_high_connected_fd'] = ('032', k_high_connected_fd)
     dry_q_high_rainbow = [("Qs", "7c", "3d"), ("Qs", "8c", "3d"), ("Qs", "5c", "2d")]
     dry_q_high_fd = [("Qs", "7c", "3s"), ("Qs", "8c", "3s"), ("Qs", "5c", "2s")]
     q_high_double_broadway_rainbow = [("Qs", "Jc", "3d"), ("Qs", "Jc", "9d"), ("Qs", "Tc", "7d")]
     q_high_double_broadway_fd = [("Qs", "Jc", "3s"), ("Qs", "Jc", "5s"), ("Qs", "Tc", "7s")]
     q_high_connected_rainbow = [("Qs", "9c", "5d"), ("Qs", "8c", "6d"), ("Qs", "7c", "6d")]
     q_high_connected_fd = [("Qs", "9c", "5s"), ("Qs", "8c", "6s"), ("Qs", "7c", "6s")]
-    flop_dict['dry_q_high_rainbow'] = ('DQHR', dry_q_high_rainbow)
-    flop_dict['dry_q_high_fd'] = ('DQHFD', dry_q_high_fd)
-    flop_dict['q_high_double_broadway_rainbow'] = ('QHDBR', q_high_double_broadway_rainbow)
-    flop_dict['q_high_double_broadway_fd'] = ('QHDBFD', q_high_double_broadway_fd)
-    flop_dict['q_high_connected_rainbow'] = ('QHCR', q_high_connected_rainbow)
-    flop_dict['q_high_connected_fd'] = ('QHCFD', q_high_connected_fd)
+    flop_dict['dry_q_high_rainbow'] = ('033', dry_q_high_rainbow)
+    flop_dict['dry_q_high_fd'] = ('034', dry_q_high_fd)
+    flop_dict['q_high_double_broadway_rainbow'] = ('035', q_high_double_broadway_rainbow)
+    flop_dict['q_high_double_broadway_fd'] = ('036', q_high_double_broadway_fd)
+    flop_dict['q_high_connected_rainbow'] = ('037', q_high_connected_rainbow)
+    flop_dict['q_high_connected_fd'] = ('038', q_high_connected_fd)
     dry_j_high_rainbow = [("Js", "6c", "2d"), ("Js", "5c", "2d"), ("Js", "8c", "2d")]
     dry_j_high_fd = [("Js", "6c", "3s"), ("Js", "5c", "2s"), ("Js", "8c", "2s")]
     j_high_straight_rainbow = [("Js", "Tc", "9d"), ("Js", "9c", "7d"), ("Js", "9c", "8d")]
     j_high_straight_fd = [("Js", "Tc", "9s"), ("Js", "9c", "7s"), ("Js", "9c", "8s")]
     j_high_connected_rainbow = [("Js", "7c", "6d"), ("Js", "9c", "6d"), ("Js", "8c", "4d")]
     j_high_connected_fd = [("Js", "7c", "6s"), ("Js", "9c", "6s"), ("Js", "8c", "6d")]
-    flop_dict['dry_j_high_rainbow'] = ('DJHR', dry_j_high_rainbow)
-    flop_dict['dry_j_high_fd'] = ('DJHFD', dry_j_high_fd)
-    flop_dict['j_high_straight_rainbow'] = ('JHSR', j_high_straight_rainbow)
-    flop_dict['j_high_straight_fd'] = ('JHSFD', j_high_straight_fd)
-    flop_dict['j_high_connected_rainbow'] = ('JHCR', j_high_connected_rainbow)
-    flop_dict['j_high_connected_fd'] = ('JHCFD', j_high_connected_fd)
+    flop_dict['dry_j_high_rainbow'] = ('039', dry_j_high_rainbow)
+    flop_dict['dry_j_high_fd'] = ('040', dry_j_high_fd)
+    flop_dict['j_high_straight_rainbow'] = ('041', j_high_straight_rainbow)
+    flop_dict['j_high_straight_fd'] = ('042', j_high_straight_fd)
+    flop_dict['j_high_connected_rainbow'] = ('043', j_high_connected_rainbow)
+    flop_dict['j_high_connected_fd'] = ('044', j_high_connected_fd)
     dry_t_high_rainbow = [("Ts", "8c", "3d"), ("Ts", "7c", "2d"), ("Ts", "6c", "4d")]
     dry_t_high_fd = [("Ts", "8c", "3s"), ("Ts", "7c", "2d"), ("Ts", "6c", "4s")]
     t_high_straight_rainbow = [("Ts", "7c", "6d"), ("Ts", "9c", "8d"), ("Ts", "8c", "7d")]
     t_high_straight_fd = [("Ts", "7c", "6s"), ("Ts", "9c", "8s"), ("Ts", "8c", "7s")]
     t_high_connected_rainbow = [("Ts", "8c", "5d"), ("Ts", "6c", "5d"), ("Ts", "9c", "5d")]
     t_high_connected_fd = [("Ts", "8c", "5s"), ("Ts", "6c", "5s"), ("Ts", "9c", "5s")]
-    flop_dict['dry_t_high_rainbow'] = ('DTHR', dry_t_high_rainbow)
-    flop_dict['dry_t_high_fd'] = ('DTHFD', dry_t_high_fd)
-    flop_dict['t_high_straight_rainbow'] = ('THSR', t_high_straight_rainbow)
-    flop_dict['t_high_straight_fd'] = ('THSFD', t_high_straight_fd)
-    flop_dict['t_high_connected_rainbow'] = ('THCR', t_high_connected_rainbow)
-    flop_dict['t_high_connected_fd'] = ('THCFD', t_high_connected_fd)
+    flop_dict['dry_t_high_rainbow'] = ('045', dry_t_high_rainbow)
+    flop_dict['dry_t_high_fd'] = ('046', dry_t_high_fd)
+    flop_dict['t_high_straight_rainbow'] = ('047', t_high_straight_rainbow)
+    flop_dict['t_high_straight_fd'] = ('048', t_high_straight_fd)
+    flop_dict['t_high_connected_rainbow'] = ('049', t_high_connected_rainbow)
+    flop_dict['t_high_connected_fd'] = ('050', t_high_connected_fd)
     low_disconnected_rainbow = [("9s", "5c", "2d"), ("8s", "4c", "2d"), ("9s", "6c", "2d")]
     low_disconnected_fd = [("9s", "5c", "2s"), ("8s", "4c", "2s"), ("9s", "6c", "2s")]
     low_semiconnected_rainbow = [("9s", "8c", "4d"), ("9s", "6c", "4d"), ("8s", "5c", "3d")]
@@ -140,30 +128,102 @@ def initialise_flop_dict():
     low_connected_fd = [("9s", "7c", "5d"), ("7s", "6c", "3d"), ("5s", "4c", "2d")]
     smooth_3straight_rainbow = [("9s", "8c", "7d"), ("7s", "6c", "5d"), ("5s", "4c", "3d")]
     smooth_3straight_fd = [("9s", "8c", "7d"), ("7s", "6c", "5d"), ("5s", "4c", "3d")]
-    flop_dict['low_disconnected_rainbow'] = ('LDR', low_disconnected_rainbow)
-    flop_dict['low_disconnected_fd'] = ('LDFD', low_disconnected_fd)
-    flop_dict['low_semiconnected_rainbow'] = ('LSR', low_semiconnected_rainbow)
-    flop_dict['low_semiconnected_fd'] = ('LSFD', low_semiconnected_fd)
-    flop_dict['low_connected_rainbow'] = ('LCR', low_connected_rainbow)
-    flop_dict['low_conneected_fd'] = ('LCFD', low_connected_fd)
-    flop_dict['smooth_3straight_rainbow'] = ('SSR', smooth_3straight_rainbow)
-    flop_dict['smooth_3straight_fd'] = ('SSFD', smooth_3straight_fd)
+    flop_dict['low_disconnected_rainbow'] = ('051', low_disconnected_rainbow)
+    flop_dict['low_disconnected_fd'] = ('052', low_disconnected_fd)
+    flop_dict['low_semiconnected_rainbow'] = ('053', low_semiconnected_rainbow)
+    flop_dict['low_semiconnected_fd'] = ('054', low_semiconnected_fd)
+    flop_dict['low_connected_rainbow'] = ('055', low_connected_rainbow)
+    flop_dict['low_connected_fd'] = ('056', low_connected_fd)
+    flop_dict['smooth_3straight_rainbow'] = ('057', smooth_3straight_rainbow)
+    flop_dict['smooth_3straight_fd'] = ('058', smooth_3straight_fd)
+
+    global map_names
+    map_names['low_trips_flops'] = '001'
+    map_names['high_trips_flops'] = '002'
+    map_names['low_connected_monotone'] = '003'
+    map_names['low_disconnected_monotone'] = '004'
+    map_names['high_monotone'] = '005'
+    map_names['high_flopped_straight_monotone'] = '006'
+    map_names['low_paired_low_side_rainbow'] = ('007')
+    map_names['low_paired_low_side_fd'] = ('008')
+    map_names['low_paired_ak_side_rainbow'] = ('009')
+    map_names['low_paired_ak_side_fd'] = ('010')
+    map_names['low_paired_high_side_rainbow'] = ('011')
+    map_names['low_paired_high_side_fd'] = ('012')
+    map_names['high_paired_low_side_rainbow'] = ('013')
+    map_names['high_paired_low_side_fd'] = ('014')
+    map_names['high_paired_high_side_rainbow'] = ('015')
+    map_names['high_paired_high_side_fd'] = ('016')
+    map_names['triple_broadway_rainbow'] = ('017')
+    map_names['triple_broadway_fd'] = ('018')
+    map_names['a_low_low_rainbow'] = ('019')
+    map_names['a_low_low_fd'] = ('020')
+    map_names['dry_a_high_rainbow'] = ('021')
+    map_names['dry_a_high_fd'] = ('022')
+    map_names['a_high_straightdraw_rainbow'] = ('023')
+    map_names['a_high_straightdraw_fd'] = ('024')
+    map_names['a_high_double_broadway_rainbow'] = ('025')
+    map_names['a_high_double_broadway_fd'] = ('026')
+    map_names['dry_k_high_rainbow'] = ('027')
+    map_names['dry_k_high_fd'] = ('028')
+    map_names['k_high_double_broadway_rainbow'] = ('029')
+    map_names['k_high_double_broadway_fd'] = ('030')
+    map_names['k_high_connected_rainbow'] = ('031')
+    map_names['k_high_connected_fd'] = ('032')
+    map_names['dry_q_high_rainbow'] = ('033')
+    map_names['dry_q_high_fd'] = ('034')
+    map_names['q_high_double_broadway_rainbow'] = ('035')
+    map_names['q_high_double_broadway_fd'] = ('036')
+    map_names['q_high_connected_rainbow'] = ('037')
+    map_names['q_high_connected_fd'] = ('038')
+    map_names['dry_j_high_rainbow'] = ('039')
+    map_names['dry_j_high_fd'] = ('040')
+    map_names['j_high_straight_rainbow'] = ('041')
+    map_names['j_high_straight_fd'] = ('042')
+    map_names['j_high_connected_rainbow'] = ('043')
+    map_names['j_high_connected_fd'] = ('044')
+    map_names['dry_t_high_rainbow'] = ('045')
+    map_names['dry_t_high_fd'] = ('046')
+    map_names['t_high_straight_rainbow'] = ('047')
+    map_names['t_high_straight_fd'] = ('048')
+    map_names['t_high_connected_rainbow'] = ('049')
+    map_names['t_high_connected_fd'] = ('050')
+    map_names['low_disconnected_rainbow'] = ('051')
+    map_names['low_disconnected_fd'] = ('052')
+    map_names['low_semiconnected_rainbow'] = ('053')
+    map_names['low_semiconnected_fd'] = ('054')
+    map_names['low_connected_rainbow'] = ('055')
+    map_names['low_connected_fd'] = ('056')
+    map_names['smooth_3straight_rainbow'] = ('057')
+    map_names['smooth_3straight_fd'] = ('058')
+
+
+
+
+
+class FlopCard:
+    def __init__(self, card, suit):
+        self.card = card
+        self.suit = suit
 
 def boardtype(flop):
     #looks at the flop and evaluates the texture. Return type: (flop grouping name, examples)
     global flop_dict
-    cards = flop.get_cards()
-    high_card = flop.high_card
-    middle_card = flop.middle_card
-    low_card = flop.low_card
+    cards = [-1, -1, -1]
+    cards[0] = FlopCard(flop[0][0],flop[0][1])
+    cards[1] = FlopCard(flop[1][0], flop[1][1])
+    cards[2] = FlopCard(flop[2][0], flop[2][1])
 
+    high_card = flop[0][0]
+    middle_card = flop[1][0]
+    low_card = flop[2][0]
     
     #trips flops 
     low_trips_flops = [("2s", "2c", "2d"), ("4s", "4d", "4h"), ("6c", "6d", "6h")]
     high_trips_flops = [("9s", "9c", "9d"), ("Js", "Jc", "Jd"), ("Ks", "Kc", "Kd")]
 
     if high_card == middle_card == low_card: 
-        if flop.high_card.rank <= 7: 
+        if flop.high_card <= 7:
             return ("low_trips", low_trips_flops)
         else: 
             return ("high_trips", high_trips_flops) 
@@ -175,7 +235,7 @@ def boardtype(flop):
     high_flopped_straight_monotone = [("As", "Ks", "Ts"), ("Ks", "Js", "9s"), ("Qs", "Js", "8s")]
 
 
-    if cards[0].suit == cards[1].suit == cards[2].suit: 
+    if cards[0].suit == cards[1].suit == cards[2].suit:
         gaps = (high_card - middle_card - 1) + (middle_card - low_card - 1)
         if high_card <= 10: 
             if gaps <= 4: 

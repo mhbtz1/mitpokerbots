@@ -1,6 +1,6 @@
-from actions import FoldAction, RaiseAction, CheckAction
-from states import RoundState
-from python_skeleton import Evaluator
+from skeleton.actions import FoldAction, RaiseAction, CheckAction
+from skeleton.states import RoundState
+import Evaluator
 import math
 
 
@@ -35,7 +35,7 @@ class SwapPoker:
 
     def utility(cfr_game_state, history, cur_player):
        if(len(history)>= 3 and history[-3:] == 'FLD'):
-           return cfr_game_state.pot_size
+           return math.log(cfr_game_state.pot_size)
        else:
            '''
            implement showdown and see who gets the utility

@@ -5,7 +5,7 @@ import numpy as np
 import re
 
 import SwapPoker
-from python_skeleton import boardtype
+import boardtype
 
 
 class InformationSet:
@@ -124,8 +124,8 @@ class CFR_Game_State:
             return True
         else:
             return False
-
-    def action_translation(self, sizing):
+    @staticmethod
+    def action_translation(sizing):
         '''
         Translates the action of a bet to a bet size we can understand
         '''
@@ -292,7 +292,7 @@ class MCCFR():
 
     def get_information_set(self, card_plus_history):
         if (card_plus_history not in self.info_map):
-                self.info_map[card_plus_history] = InformationSet(8)
+                self.info_map[card_plus_history] = InformationSet(7)
         return self.info_map[card_plus_history]
 
     def parse_history(self, hist):
@@ -315,15 +315,17 @@ class MCCFR():
             cur_game_state.apply_action(history_state[0:-3],history_state[-3:],cur_player)
         all_actions = cur_game_state.get_all_actions(history_state, (cur_player+1)%2)
 
-        print("HISTORY: {}".format(history_state))
+        #print("HISTORY: {}".format(history_state))
         print("BOARD STATE: {}".format(cur_game_state.board_cards))
+        '''
         print("STACKS: {}, {}".format(cur_game_state.p1_stack, game_state.p2_stack))
         print("POT: {}".format(cur_game_state.pot_size))
         print("NUM OF ACTIONS ON CURRENT STREET: {}".format(cur_game_state.ACTIONS_PER_STREET))
         print("AVAILABLE ACTION: {}".format(all_actions))
+        '''
         if (cur_game_state.is_terminal(history_state)):
             print("TERMINAL STATE REACHED")
-            utility = SwapPoker.utility(cur_game_state,history_state,cur_player)
+            utility = SwapPoker.SwapPoker.utility(cur_game_state,history_state,cur_player)
             print("UTILITY: {}".format(utility))
             return utility
 
@@ -340,9 +342,20 @@ class MCCFR():
         parsed_list = self.parse_history(history_state)
         print("PARSED LIST: {}".format(parsed_list))
         no_more_raise = False
+        last_check = False
+        last_call = False
         if(len(parsed_list)>= 2 and parsed_list[-1][0]=='R' and parsed_list[-2][0] == 'R'):
             no_more_raise = True
+        if(len(parsed_list)>0 and parsed_list[-1]=='CHK'):
+            last_check = True
+        if(len(parsed_list)>0 and parsed_list[-1]=='CAL'):
+            last_call = True
         for i, val in enumerate(all_actions):
+
+            if(last_check):
+                if(val == 'CAL' or val == 'FLD'):
+                    continue
+
             if(no_more_raise):
                 if(val == 'CAL' or val == 'FLD'):
                     action_prob = cur_strategy[i]
@@ -397,7 +410,7 @@ for (pos, strat) in info_sets.items():
 
 
 cfr_test_run = CFR_Game_State(['Ac', '5s', 'Qd'], ['Qs', '9s'], 2000, ['Kc', '9c'], 2000, 0, 25)
-
+'''
 print(cfr_test_run.get_all_actions('',0))
 cfr_test_run.apply_action('', 'RCC', 1)
 print('--------------------------------------------------------')
@@ -439,7 +452,7 @@ print("STACK SIZES: {}, {}".format(cfr_test_run.p1_stack, cfr_test_run.p2_stack)
 print(cfr_test_run.board_cards)
 print(cfr_test_run.p1_stack, cfr_test_run.p2_stack)
 cfr_test_run.get_all_actions('RCCRCCRCCRCCCAL',1)
-
+'''
 
 #cfr_test_run.ACTIONS_PER_STREET = 2
 #cfr_test_run.get_all_actions('RCCRCC', 0)
@@ -451,7 +464,8 @@ def select_random_strategy(strategy_vector):
     while(sm < val and idx < len(strategy_vector)):
         sm += strategy_vector[idx]
         idx += 1
-    return idx
+
+    return idx - 1
 
 def train_optimised(num_iterations):
     util = 0
@@ -482,7 +496,7 @@ def train_optimised(num_iterations):
 
         for _ in range(num_iterations):
             if(ip_player > 0.5):
-                cfr_game = CFR_Game_State(b, p1_cards, 200-randomise_pot_size/2, p2_cards, 200-randomise_pot_size/2, 0, randomise_pot_size)
+                cfr_game = CFR_Game_State(b, p1_cards, 2000-randomise_pot_size/2, p2_cards, 2000-randomise_pot_size/2, 0, randomise_pot_size)
                 reach_prob = np.ones(2)
                 mccfr.mc_cfrm(cfr_game, '', reach_prob, 1)
                 for (info, st) in mccfr.info_map.items():
@@ -493,7 +507,7 @@ def train_optimised(num_iterations):
                     re.sub(' +', ' ', s)
                     set_write.add(s)
             else:
-                cfr_game = CFR_Game_State(b, p1_cards, 200-randomise_pot_size/2, p2_cards, 200-randomise_pot_size/2, 1, randomise_pot_size)
+                cfr_game = CFR_Game_State(b, p1_cards, 2000-randomise_pot_size/2, p2_cards, 2000-randomise_pot_size/2, 1, randomise_pot_size)
                 reach_prob = np.ones(2)
                 mccfr.mc_cfrm(cfr_game, '', reach_prob, 0)
                 for (info, st) in mccfr.info_map.items():
@@ -504,9 +518,9 @@ def train_optimised(num_iterations):
                     re.sub(' +', ' ', s)
                     set_write.add(s)
 
-        for element in set_write:
-            writ.write(element)
-            writ.write('\n')
+    for element in set_write:
+        writ.write(element)
+        writ.write('\n')
 
 
 
