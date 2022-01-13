@@ -1,3 +1,4 @@
+import typing
 from typing import Union
 
 from card import Card

@@ -1,8 +1,8 @@
 """Module hashing cards."""
 from tables import CHOOSE, DP
+import typing
 
-
-def hash_quinary(quinary: list[int], num_cards: int) -> int:
+def hash_quinary(quinary, num_cards):
     """Hash list of cards.
     Args:
         quinary (list[int]): List of the count of the cards.
