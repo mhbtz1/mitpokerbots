@@ -3,15 +3,15 @@ Simple example pokerbot, written in Python.
 '''
 import eval7
 
+
 from skeleton.actions import FoldAction, CallAction, CheckAction, RaiseAction
-from skeleton.states import GameState, TerminalState, RoundState
-from skeleton.states import NUM_ROUNDS, STARTING_STACK, BIG_BLIND, SMALL_BLIND
+from skeleton.states import STARTING_STACK
 from skeleton.bot import Bot
 from skeleton.runner import parse_args, run_bot
-import skeleton.Preflop as Preflop
-import skeleton.MCCFR as MCCFR
+import python_skeleton.Preflop as Preflop
+import python_skeleton.MCCFR as MCCFR
 import random
-import skeleton.boardtype as boardtype
+import python_skeleton.boardtype as boardtype
 
 class Player(Bot):
     '''
@@ -221,8 +221,10 @@ class Player(Bot):
                 self.OUR_CURRENT_STACK = my_stack
 
 
-        recommended_strategy = self.locate_closest_strategy(boardtype.boardtype(round_state.deck[:3])+self.current_line)
+        recommended_strategy = self.locate_closest_strategy(
+            boardtype.boardtype(round_state.deck[:3]) + self.current_line)
         action = MCCFR.select_random_strategy(recommended_strategy)
+        print("ACTION: {}".format(action))
         '''
         always apply MCCFR's recommendations with betting on streets
         '''

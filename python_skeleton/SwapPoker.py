@@ -1,6 +1,6 @@
 from actions import FoldAction, RaiseAction, CheckAction
 from states import RoundState
-import Evaluator
+from python_skeleton import Evaluator
 import math
 
 
@@ -45,8 +45,8 @@ class SwapPoker:
            p2 = cfr_game_state.p2_hole
 
 
-           ret = Evaluator.evaluate_cards(*((board_state+p1)))
-           ret2 = Evaluator.evaluate_cards(*((board_state+p2)))
+           ret = Evaluator.evaluate_cards(*((board_state + p1)))
+           ret2 = Evaluator.evaluate_cards(*((board_state + p2)))
 
 
            print("RET VALUES: {}, {}".format(ret, ret2))

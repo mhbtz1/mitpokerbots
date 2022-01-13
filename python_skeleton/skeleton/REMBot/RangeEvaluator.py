@@ -13,7 +13,6 @@ class PreflopHandRanges:
     sequence = [BTN_RFI, BB_CALL, BB_3BET, BTN_CALL_VERSUS_3BET, BTN_4BET, BB_CALL, BB_CALL_VERSUS_4BET]
 
 
-
 class RangeEvaluator():
     def __init__ (self, our_range, enemy_range, prev_actions, our_position, enemy_position):
         self.our_range = our_range

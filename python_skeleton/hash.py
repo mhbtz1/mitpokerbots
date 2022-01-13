@@ -1,5 +1,5 @@
 """Module hashing cards."""
-from tables import CHOOSE, DP
+from python_skeleton.tables import CHOOSE, DP
 
 
 def hash_quinary(quinary: list[int], num_cards: int) -> int:

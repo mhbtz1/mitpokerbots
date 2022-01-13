@@ -1,8 +1,8 @@
 from typing import Union
 
-from card import Card
+from python_skeleton.card import Card
 from hash import hash_quinary
-from tables import (
+from python_skeleton.tables import (
     BINARIES_BY_ID,
     FLUSH,
     NO_FLUSH_5,

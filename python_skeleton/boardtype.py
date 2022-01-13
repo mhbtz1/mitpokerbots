@@ -30,18 +30,6 @@ suit_map = {
 flop_dict = {}
 
 
-
-class Flop: 
-    #flop has list of 3 card ranks and suits, sorted based on rank
-    #cards have two attributes, suit and rank 
-    def __init__(self, cards): 
-        self.high_card = cards[0].rank
-        self.middle_card = cards[1].rank
-        self.low_card = cards[2].rank 
-    
-    def get_cards(self): 
-        return [card_1, card_2, card_3]
-
 def initialise_flop_dict():
     global flop_dict
     low_trips_flops = [("2s", "2c", "2d"), ("4s", "4d", "4h"), ("6c", "6d", "6h")]

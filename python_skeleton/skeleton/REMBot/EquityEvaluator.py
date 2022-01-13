@@ -10,6 +10,7 @@ class EquityEvaluator:
     def evaluate_hand_vs_range_equity(self, hand, range, board):
         ans = eval7.py_hand_vs_range_exact(hand, range, board)
         return ans
+
     def evaluate_range_vs_range_equity(self):
         ans = 0
         range1 = self.range1

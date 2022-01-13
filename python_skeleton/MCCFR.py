@@ -1,15 +1,12 @@
 import copy
+import random
+
+import numpy as np
+import re
 
 import SwapPoker
-import numpy as np
-import random
-import InformationSet
-import random
+from python_skeleton import boardtype
 
-import numpy as np
-from SwapPoker import SwapPoker
-import boardtype
-import re
 
 class InformationSet:
     '''

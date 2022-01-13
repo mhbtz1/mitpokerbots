@@ -2,7 +2,7 @@
 Encapsulates game and round state information for the player.
 '''
 from collections import namedtuple
-from actions import FoldAction, CallAction, CheckAction, RaiseAction
+from .actions import FoldAction, CallAction, CheckAction, RaiseAction
 
 GameState = namedtuple('GameState', ['bankroll', 'game_clock', 'round_num'])
 TerminalState = namedtuple('TerminalState', ['deltas', 'previous_state'])
