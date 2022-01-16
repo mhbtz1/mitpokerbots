@@ -266,8 +266,8 @@ class Player(Bot):
             if(action==0):
                 print(0.66*pot_size)
                 amt = int(0.66 * pot_size)
-                amt = min(max_raise, int(0.66 * pot_size))
-                amt = max(min_raise, int(0.66 * pot_size))
+                amt = min(max_raise, amt)
+                amt = max(min_raise, amt)
                 if(RaiseAction in legal_actions and amt <= my_stack):
                     r = RaiseAction(amt)
                     return r
@@ -280,8 +280,8 @@ class Player(Bot):
             elif(action==1):
                 print(0.75 * pot_size)
                 amt = int(0.75 * pot_size)
-                amt = min(max_raise, int(0.66 * pot_size))
-                amt = max(min_raise, int(0.66 * pot_size))
+                amt = min(max_raise, amt)
+                amt = max(min_raise, amt)
                 if(RaiseAction in legal_actions and amt <= my_stack):
                     r = RaiseAction(amt)
                     return r
@@ -292,8 +292,8 @@ class Player(Bot):
             elif(action == 2):
                 print(0.80 * pot_size)
                 amt = int(0.80 * pot_size)
-                amt = min(max_raise, int(0.80 * pot_size))
-                amt = max(min_raise, int(0.80 * pot_size))
+                amt = min(max_raise, amt)
+                amt = max(min_raise, amt)
                 if(RaiseAction in legal_actions and amt <= my_stack):
                     r = RaiseAction(amt)
                     return r
@@ -306,8 +306,8 @@ class Player(Bot):
             elif(action == 3):
                 print(2 * pot_size)
                 amt = int(2 * pot_size)
-                amt = min(max_raise, int(2 * pot_size))
-                amt = max(min_raise, int(2 * pot_size))
+                amt = min(max_raise, amt)
+                amt = max(min_raise, amt)
                 if(RaiseAction in legal_actions and amt <= my_stack):
                     r = RaiseAction(amt)
                     return r

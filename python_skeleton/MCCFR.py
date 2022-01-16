@@ -500,8 +500,8 @@ def train_optimised(num_iterations):
 
 
 
-train_optimised(200)
-
+#train_optimised(200)
+select_random_strategy()
 
 
 
